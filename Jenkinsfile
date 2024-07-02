@@ -1,9 +1,10 @@
 pipeline {
     agent any
-    
+
     environment {
-        REPO_URL = 'https://github.com/hshar/website.git'
+        REPO_URL = 'https://github.com/pankajxpl23/jenkins-case-study.git'
         CONTAINER_NAME = 'website_container'
+        IMAGE_NAME = 'website_image'
     }
 
     stages {
@@ -13,28 +14,18 @@ pipeline {
             }
         }
 
-        stage('Build') {
-            parallel {
-                stage('Master Branch Build and Publish') {
-                    when {
-                        branch 'master'
-                    }
-                    steps {
-                        script {
-                            sh 'docker build -t website_image .'
-                            sh 'docker run -d -p 82:80 --name ${CONTAINER_NAME} website_image'
-                        }
-                    }
+        stage('Build and Publish') {
+            when {
+                anyOf {
+                    branch 'master';
+                    branch 'develop'
                 }
-
-                stage('Develop Branch Build Only') {
-                    when {
-                        branch 'develop'
-                    }
-                    steps {
-                        script {
-                            sh 'docker build -t website_image .'
-                        }
+            }
+            steps {
+                script {
+                    sh 'sudo docker build -t ${IMAGE_NAME} .'
+                    if (env.BRANCH_NAME == 'master') {
+                        sh 'sudo docker run -d -p 82:80 --name ${CONTAINER_NAME} ${IMAGE_NAME}'
                     }
                 }
             }
@@ -43,9 +34,9 @@ pipeline {
         stage('Clean Up') {
             steps {
                 script {
-                    sh 'docker stop ${CONTAINER_NAME} || true'
-                    sh 'docker rm ${CONTAINER_NAME} || true'
-                    sh 'docker rmi website_image || true'
+                    sh 'sudo docker stop ${CONTAINER_NAME} || true'
+                    sh 'sudo docker rm ${CONTAINER_NAME} || true'
+                    sh 'sudo docker rmi ${IMAGE_NAME} || true'
                 }
             }
         }
