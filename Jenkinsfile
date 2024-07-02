@@ -15,12 +15,6 @@ pipeline {
         }
 
         stage('Build and Publish') {
-            when {
-                anyOf {
-                    branch 'master';
-                    branch 'develop'
-                }
-            }
             steps {
                 script {
                     sh 'sudo docker build -t ${IMAGE_NAME} .'
